@@ -1,0 +1,123 @@
+#include <iostream>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+// Type definitions for grammars and sets
+using Grammar = unordered_map<string, vector<string>>;
+using FirstSet = unordered_map<string, unordered_set<string>>;
+using FollowSet = unordered_map<string, unordered_set<string>>;
+
+// Function to compute FIRST sets for all non-terminals in the grammar
+void computeFirstSets(const Grammar& grammar, FirstSet& firstSets) {
+    bool changesMade = true;
+
+    while (changesMade) {
+        changesMade = false;
+
+        // Iterate through each non-terminal symbol in the grammar
+        for (const auto& entry : grammar) {
+            const string& nonTerminal = entry.first;
+            const vector<string>& productions = entry.second;
+
+            for (const string& prod : productions) {
+                // Get the first symbol of the production
+                string firstSymbol = prod.substr(0, prod.find(' '));
+
+                // If firstSymbol is a terminal, add it to the FIRST set of the non-terminal
+                if (!grammar.count(firstSymbol) && firstSymbol != "|") {
+                    changesMade |= firstSets[nonTerminal].insert(firstSymbol).second;
+                }
+            }
+        }
+    }
+}
+
+// Function to compute FOLLOW sets for all non-terminals in the grammar
+void computeFollowSets(const Grammar& grammar, const FirstSet& firstSets, FollowSet& followSets) {
+    bool changesMade = true;
+
+    // Initialize FOLLOW set of the start symbol with $
+    followSets[grammar.begin()->first].insert("$");
+
+    while (changesMade) {
+        changesMade = false;
+
+        // Iterate through each non-terminal symbol in the grammar
+        for (const auto& entry : grammar) {
+            const string& nonTerminal = entry.first;
+            const vector<string>& productions = entry.second;
+
+            for (const string& prod : productions) {
+                size_t pos = 0;
+                while (pos != string::npos) {
+                    // Find the next occurrence of a non-terminal in the production
+                    pos = prod.find(' ', pos + 1);
+                    string nextSymbol = prod.substr(pos + 1, prod.find(' ', pos + 1) - pos - 1);
+
+                    if (grammar.count(nextSymbol)) {
+                        // If nextSymbol is a non-terminal, add FIRST of the substring after it to FOLLOW
+                        string rest = prod.substr(pos + 1);
+                        for (const string& terminal : firstSets.at(rest)) {
+                            changesMade |= followSets[nextSymbol].insert(terminal).second;
+                        }
+
+                        // If rest can derive ε (empty), add FOLLOW of current non-terminal to FOLLOW of nextSymbol
+                        if (firstSets.at(rest).count("|")) {
+                            for (const string& terminal : followSets.at(nonTerminal)) {
+                                changesMade |= followSets[nextSymbol].insert(terminal).second;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Function to print FIRST and FOLLOW sets of all non-terminals
+void printFirstAndFollowSets(const FirstSet& firstSets, const FollowSet& followSets) {
+    cout << "FIRST Sets:\n";
+    for (const auto& entry : firstSets) {
+        cout << entry.first << ": { ";
+        for (const string& terminal : entry.second) {
+            cout << terminal << " ";
+        }
+        cout << "}\n";
+    }
+
+    cout << "\nFOLLOW Sets:\n";
+    for (const auto& entry : followSets) {
+        cout << entry.first << ": { ";
+        for (const string& terminal : entry.second) {
+            cout << terminal << " ";
+        }
+        cout << "}\n";
+    }
+}
+
+int main() {
+    // Example grammar represented as a map of non-terminals to productions
+    Grammar grammar = {
+        {"S", {"A B", "B C D", "a"}},
+        {"A", {"a", "b | c"}},
+        {"B", {"B b", "| c"}},
+        {"C", {"d", "e"}}
+    };
+
+    // Initialize FIRST and FOLLOW sets
+    FirstSet firstSets;
+    FollowSet followSets;
+
+    // Compute FIRST and FOLLOW sets
+    computeFirstSets(grammar, firstSets);
+    computeFollowSets(grammar, firstSets, followSets);
+
+    // Print FIRST and FOLLOW sets
+    printFirstAndFollowSets(firstSets, followSets);
+
+    return 0;
+}
