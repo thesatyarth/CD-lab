@@ -1,0 +1,38 @@
+#include <iostream>
+#include <unordered_map>
+
+using namespace std;
+
+// Function to generate MIPS code for an indexed assignment statement
+string generateMIPSIndexedAssignment(const string& arrayName, const string& indexReg, const string& valueReg) {
+    string result;
+
+    // Load base address of the array into a register
+    result += "la $t0, " + arrayName + "\n";  // $t0 = address of array
+
+    // Calculate the offset (index * 4 for integer array)
+    result += "sll $t1, " + indexReg + ", 2\n";  // $t1 = index * 4 (shift left by 2 = multiply by 4)
+
+    // Compute memory address of the indexed element
+    result += "add $t0, $t0, $t1\n";  // $t0 = base address + offset
+
+    // Store the value into the memory location
+    result += "sw " + valueReg + ", ($t0)\n";  // Store value into array[index]
+
+    return result;
+}
+
+int main() {
+    // Example: Translate C++ statement 'array[index] = value;' into MIPS assembly
+    string arrayName = "myArray";
+    string indexReg = "$s1";   // Register containing the index value
+    string valueReg = "$s2";   // Register containing the value to be assigned
+
+    string mipsCode = generateMIPSIndexedAssignment(arrayName, indexReg, valueReg);
+
+    // Print the generated MIPS code
+    cout << "Generated MIPS Code:\n";
+    cout << mipsCode << endl;
+
+    return 0;
+}
