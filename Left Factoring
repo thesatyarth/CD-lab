@@ -1,0 +1,97 @@
+#include <iostream>
+#include <unordered_map>
+#include <vector>
+#include <string>
+#include <algorithm>
+
+using namespace std;
+
+// Function to perform left factoring for a given grammar
+void leftFactorGrammar(unordered_map<string, vector<string>>& grammar) {
+    // Iterate through each non-terminal symbol in the grammar
+    for (auto& entry : grammar) {
+        const string& nonTerminal = entry.first;
+        vector<string>& productions = entry.second;
+
+        // Find the longest common prefix among all productions of the current non-terminal
+        string commonPrefix = "";
+        for (const string& prod : productions) {
+            size_t prefixLength = 0;
+            while (prefixLength < prod.length() && 
+                   prefixLength < commonPrefix.length() &&
+                   prod[prefixLength] == commonPrefix[prefixLength]) {
+                prefixLength++;
+            }
+            commonPrefix = prod.substr(0, prefixLength);
+        }
+
+        // If a common prefix is found, perform left factoring
+        if (!commonPrefix.empty() && commonPrefix != "") {
+            vector<string> newProductions;
+            string remainingPrefix = "";
+
+            // Create new productions and update existing ones
+            for (const string& prod : productions) {
+                if (prod.substr(0, commonPrefix.length()) == commonPrefix) {
+                    // Remove common prefix from current production
+                    string remainingPart = prod.substr(commonPrefix.length());
+
+                    // Add remaining part to new productions
+                    if (remainingPart.empty()) {
+                        remainingPart = "|";
+                    }
+                    newProductions.push_back(remainingPart);
+                } else {
+                    // Keep the original production as is
+                    newProductions.push_back(prod);
+                }
+            }
+
+            // Add new non-terminal with remaining prefix and updated productions
+            string newNonTerminal = nonTerminal + "'";
+            grammar[newNonTerminal] = newProductions;
+
+            // Update original non-terminal productions to use the common prefix and new non-terminal
+            productions.clear();
+            productions.push_back(commonPrefix + " " + newNonTerminal);
+        }
+    }
+}
+
+// Function to print the grammar
+void printGrammar(const unordered_map<string, vector<string>>& grammar) {
+    for (const auto& entry : grammar) {
+        const string& nonTerminal = entry.first;
+        const vector<string>& productions = entry.second;
+
+        cout << nonTerminal << " -> ";
+        for (size_t i = 0; i < productions.size(); ++i) {
+            if (i > 0) {
+                cout << " | ";
+            }
+            cout << productions[i];
+        }
+        cout << endl;
+    }
+}
+
+int main() {
+    // Example grammar represented as a map of non-terminals to productions
+    unordered_map<string, vector<string>> grammar = {
+        {"S", {"abC", "abc", "ad", "aef"}},
+        {"C", {"d", "ef"}}
+    };
+
+    // Print the original grammar
+    cout << "Original Grammar:\n";
+    printGrammar(grammar);
+
+    // Perform left factoring on the grammar
+    leftFactorGrammar(grammar);
+
+    // Print the transformed grammar after left factoring
+    cout << "\nGrammar after Left Factoring:\n";
+    printGrammar(grammar);
+
+    return 0;
+}
