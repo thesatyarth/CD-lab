@@ -1,0 +1,71 @@
+#include <iostream>
+#include <vector>
+#include <sstream>
+#include <unordered_set>
+
+using namespace std;
+
+// Function to eliminate left recursion for a non-terminal symbol A
+void eliminateLeftRecursion(string nonTerminal, vector<string>& productions) {
+    vector<string> newProductions;
+    vector<string> newNonTerminals;
+    unordered_set<string> newNonTerminalSet;
+
+    // Separate productions into those with and without left recursion
+    for (const string& prod : productions) {
+        stringstream ss(prod);
+        string firstSymbol;
+        ss >> firstSymbol;
+
+        if (firstSymbol == nonTerminal) {
+            // Production with left recursion: A -> A alpha | beta
+            string alpha;
+            ss >> alpha;
+            if (!alpha.empty() && alpha != "|") {
+                // Add new non-terminal A'
+                string newNonTerminal = nonTerminal + "'";
+                newNonTerminals.push_back(newNonTerminal);
+
+                // Create new production A -> beta A'
+                string newProduction = alpha + " " + newNonTerminal;
+                newProductions.push_back(newProduction);
+            }
+        } else {
+            // Production without left recursion: A -> beta
+            newProductions.push_back(prod);
+        }
+    }
+
+    // Add epsilon production for new non-terminal A'
+    string epsilonProduction = "|";
+    newProductions.push_back(epsilonProduction);
+
+    // Build new non-terminal productions for A'
+    for (const string& newNonTerminal : newNonTerminals) {
+        string newNonTerminalProduction = newNonTerminal + " |";
+        newProductions.push_back(newNonTerminalProduction);
+    }
+
+    // Print the new grammar without left recursion
+    cout << "New Grammar (without left recursion):\n";
+    for (const string& prod : newProductions) {
+        cout << prod << endl;
+    }
+}
+
+int main() {
+    // Example grammar productions
+    vector<string> productions = {
+        "A A alpha | beta",
+        "B B gamma | delta | epsilon",
+        "C C alpha | | delta"
+    };
+
+    // Specify the non-terminal symbol to eliminate left recursion for
+    string nonTerminalToEliminate = "A";
+
+    // Eliminate left recursion for the specified non-terminal
+    eliminateLeftRecursion(nonTerminalToEliminate, productions);
+
+    return 0;
+}
