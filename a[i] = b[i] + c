@@ -1,0 +1,50 @@
+#include <iostream>
+#include <sstream>
+
+using namespace std;
+
+// Function to generate MIPS code for the indexed assignment statement a[i] = b[i] + c;
+string generateMIPSIndexedAssignment(const string& arrayA, const string& arrayB, const string& arrayC, const string& indexReg) {
+    stringstream result;
+
+    // Load base addresses of arrays into registers
+    result << "la $t0, " << arrayA << endl;  // $t0 = address of arrayA
+    result << "la $t1, " << arrayB << endl;  // $t1 = address of arrayB
+    result << "la $t2, " << arrayC << endl;  // $t2 = address of arrayC
+
+    // Calculate offset for index (index * 4 for integer arrays)
+    result << "sll $t3, " << indexReg << ", 2" << endl;  // $t3 = index * 4 (shift left by 2 = multiply by 4)
+
+    // Compute memory addresses of array elements
+    result << "add $t0, $t0, $t3" << endl;  // $t0 = &arrayA[i]
+    result << "add $t1, $t1, $t3" << endl;  // $t1 = &arrayB[i]
+    result << "add $t2, $t2, $t3" << endl;  // $t2 = &arrayC[i]
+
+    // Load values from arrayB[i] and arrayC[i] into registers
+    result << "lw $t4, ($t1)" << endl;  // $t4 = b[i]
+    result << "lw $t5, ($t2)" << endl;  // $t5 = c[i]
+
+    // Perform addition: $t6 = b[i] + c[i]
+    result << "add $t6, $t4, $t5" << endl;
+
+    // Store the result ($t6) into arrayA[i]
+    result << "sw $t6, ($t0)" << endl;
+
+    return result.str();
+}
+
+int main() {
+    // Example: Translate C++ statement 'a[i] = b[i] + c;' into MIPS assembly
+    string arrayA = "a";
+    string arrayB = "b";
+    string arrayC = "c";
+    string indexReg = "$s0";  // Register containing the index value
+
+    string mipsCode = generateMIPSIndexedAssignment(arrayA, arrayB, arrayC, indexReg);
+
+    // Print the generated MIPS code
+    cout << "Generated MIPS Code:\n";
+    cout << mipsCode << endl;
+
+    return 0;
+}
