@@ -1,0 +1,44 @@
+#include <iostream>
+#include <unordered_map>
+
+using namespace std;
+
+// Function to generate MIPS code for a simple assignment statement
+string generateMIPS(const string& varLeft, const string& varRight1, const string& varRight2) {
+    // Mapping of arithmetic operators to MIPS instructions
+    unordered_map<string, string> mipsInstructions = {
+        {"+", "add"},
+        {"-", "sub"},
+        {"*", "mul"},
+        {"/", "div"}
+    };
+
+    string result;
+
+    // Load right-hand side variables into registers
+    result += "lw $t0, " + varRight1 + "\n";  // Load varRight1 into $t0
+    result += "lw $t1, " + varRight2 + "\n";  // Load varRight2 into $t1
+
+    // Perform arithmetic operation (e.g., add) and store result in left-hand side variable
+    result += mipsInstructions["+"] + " $s0, $t0, $t1\n";  // Add $t0 and $t1, store result in $s0
+
+    // Store result back into left-hand side variable
+    result += "sw $s0, " + varLeft + "\n";  // Store result in varLeft
+
+    return result;
+}
+
+int main() {
+    // Example: Translate C++ statement 'a = b + c;' into MIPS assembly
+    string varLeft = "a";
+    string varRight1 = "b";
+    string varRight2 = "c";
+
+    string mipsCode = generateMIPS(varLeft, varRight1, varRight2);
+
+    // Print the generated MIPS code
+    cout << "Generated MIPS Code:\n";
+    cout << mipsCode << endl;
+
+    return 0;
+}
